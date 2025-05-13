@@ -35,35 +35,37 @@ class Component {
 }
 
 class TodoList extends Component {
+  state;
+  constructor() {
+    super();
+    this.state = {
+      tag: "div", attrs: {class: 'todo-list'}, children: [
+        {tag: 'h1', attrs: {}, children: 'TODO List'},
+        {tag: 'div', attrs: { class: "add-todo" }, children: [
+            {tag: 'input', attrs: {id: 'new-todo', type: 'text', placeholder: 'Задание'}},
+            {tag:"button", attrs: { id: "add-btn" }, children: "+"}
+          ]
+        },
+        {tag: 'ul', attrs: {id:'todos'}, children: ["Сделать домашку","Сделать практику", "Пойти домой"].map(
+              label => ({tag: 'li', attrs: {}, children: [
+                  {tag: 'input', attrs:{type:'checkbox'}},
+                  {tag: 'label', attrs:{}, children: label},
+                  {tag: 'button', attrs:{}, children: '🗑️'},
+                ]})
+          )}
+      ]
+    }
+
+  }
+  renderState(state){
+      let children = state.children;
+      if (typeof state.children === 'object') {
+          children = state.children.map(c=>this.renderState(c));
+      }
+      return createElement(state.tag, state.attrs, children);
+  }
   render() {
-    return createElement("div", { class: "todo-list" }, [
-      createElement("h1", {}, "TODO List"),
-      createElement("div", { class: "add-todo" }, [
-        createElement("input", {
-          id: "new-todo",
-          type: "text",
-          placeholder: "Задание",
-        }),
-        createElement("button", { id: "add-btn" }, "+"),
-      ]),
-      createElement("ul", { id: "todos" }, [
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Сделать домашку"),
-          createElement("button", {}, "🗑️")
-        ]),
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Сделать практику"),
-          createElement("button", {}, "🗑️")
-        ]),
-        createElement("li", {}, [
-          createElement("input", { type: "checkbox" }),
-          createElement("label", {}, "Пойти домой"),
-          createElement("button", {}, "🗑️")
-        ]),
-      ]),
-    ]);
+    return this.renderState(this.state);
   }
 }
 
