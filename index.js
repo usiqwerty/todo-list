@@ -38,7 +38,17 @@ class TodoList extends Component {
   state;
   constructor() {
     super();
-    this.state = {
+    this.state = ["Сделать домашку","Сделать практику", "Пойти домой"];
+  }
+  renderRecursion(state){
+      let children = state.children;
+      if (typeof state.children === 'object') {
+          children = state.children.map(c=>this.renderRecursion(c));
+      }
+      return createElement(state.tag, state.attrs, children);
+  }
+  render() {
+    const elementStructure = {
       tag: "div", attrs: {class: 'todo-list'}, children: [
         {tag: 'h1', attrs: {}, children: 'TODO List'},
         {tag: 'div', attrs: { class: "add-todo" }, children: [
@@ -46,7 +56,7 @@ class TodoList extends Component {
             {tag:"button", attrs: { id: "add-btn" }, children: "+"}
           ]
         },
-        {tag: 'ul', attrs: {id:'todos'}, children: ["Сделать домашку","Сделать практику", "Пойти домой"].map(
+        {tag: 'ul', attrs: {id:'todos'}, children: this.state.map(
               label => ({tag: 'li', attrs: {}, children: [
                   {tag: 'input', attrs:{type:'checkbox'}},
                   {tag: 'label', attrs:{}, children: label},
@@ -54,18 +64,8 @@ class TodoList extends Component {
                 ]})
           )}
       ]
-    }
-
-  }
-  renderState(state){
-      let children = state.children;
-      if (typeof state.children === 'object') {
-          children = state.children.map(c=>this.renderState(c));
-      }
-      return createElement(state.tag, state.attrs, children);
-  }
-  render() {
-    return this.renderState(this.state);
+    };
+    return this.renderRecursion(elementStructure);
   }
 }
 
