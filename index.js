@@ -95,6 +95,7 @@ class Task extends Component {
         this.isCompleted = isCompleted;
         this.onToggle    = onToggle;
         this.onDelete    = onDelete;
+        this.deleteCount = 0
     }
 
     render() {
@@ -111,8 +112,14 @@ class Task extends Component {
                     children: this.label
                 },
                 {
-                    tag:'button', attrs:{}, children:'🗑',
-                    onClick: this.onDelete
+                    tag:'button', attrs: {class: this.deleteCount>0?'red-button':''}, children:'🗑',
+                    onClick: () => {
+                        this.deleteCount++;
+                        if (this.deleteCount===2) {
+                            this.onDelete()
+                        }
+                        this.update()
+                    }
                 }
             ]
         });

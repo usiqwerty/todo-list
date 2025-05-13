@@ -63,3 +63,6 @@ button {
 .complete{
     color: #dddddd;
 }
+.red-button{
+    background-color: #ff0000;
+}
