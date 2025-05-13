@@ -44,80 +44,124 @@ class Component {
         this._domNode.replaceWith(newDomNode);
         this._domNode = newDomNode;
     }
+
+    _build(struct) {
+        const c = Array.isArray(struct.children)
+            ? struct.children.map(ch => typeof ch === 'object' && ch.tag
+                ? this._build(ch)
+                : ch)
+            : struct.children;
+        return createElement(struct.tag, struct.attrs, c,
+            struct.onClick, struct.onChange);
+    }
+}
+
+class AddTask extends Component {
+    constructor(onAddTask) {
+        super();
+        this.onAddTask = onAddTask;
+        this.inputValue = '';
+    }
+
+    handleInput(e)   { this.inputValue = e.target.value; }
+    handleAdd() {
+        if (!this.inputValue.trim()) return;
+        this.onAddTask(this.inputValue.trim());
+        this.inputValue = '';
+        this.update();
+    }
+
+    render() {
+        return this._build({
+            tag: 'div', attrs: {class: 'add-todo'}, children: [
+                {
+                    tag: 'input',
+                    attrs: {type: 'text', placeholder: 'Задание', value: this.inputValue},
+                    onChange: this.handleInput.bind(this)
+                },
+                {
+                    tag: 'button', attrs: {}, children: '+',
+                    onClick: this.handleAdd.bind(this)
+                }
+            ]
+        });
+    }
+}
+
+class Task extends Component {
+    constructor(label, isCompleted, onToggle, onDelete) {
+        super();
+        this.label       = label;
+        this.isCompleted = isCompleted;
+        this.onToggle    = onToggle;
+        this.onDelete    = onDelete;
+    }
+
+    render() {
+        return this._build({
+            tag:'li', attrs:{}, children:[
+                {
+                    tag:'input',
+                    attrs:{type:'checkbox', ...(this.isCompleted ? {checked:true}:{})},
+                    onClick: this.onToggle
+                },
+                {
+                    tag:'label',
+                    attrs:{class: this.isCompleted ? 'complete' : ''},
+                    children: this.label
+                },
+                {
+                    tag:'button', attrs:{}, children:'🗑',
+                    onClick: this.onDelete
+                }
+            ]
+        });
+    }
 }
 
 class TodoList extends Component {
     constructor() {
         super();
-        this.state = ["Сделать домашку", "Сделать практику", "Пойти домой"];
-        this.completeTasks = [];
-        this.currentInputValue = "";
+        this.tasks         = ['Сделать домашку','Сделать практику','Пойти домой'];
+        this.completed     = new Set();  
     }
 
-    renderRecursion(state) {
-        let children = state.children;
-        if (typeof state.children === 'object') {
-            children = state.children.map(c => this.renderRecursion(c));
-        }
-        return createElement(state.tag, state.attrs, children, state.onClick, state.onChange);
+    addTask = (text) => {
+        this.tasks.push(text);
+        this.update();
+    }
+
+    toggleTask = (label) => {
+        this.completed.has(label) ? this.completed.delete(label)
+            : this.completed.add(label);
+        this.update();
+    }
+
+    deleteTask = (label) => {
+        this.tasks = this.tasks.filter(l => l !== label);
+        this.completed.delete(label);
+        this.update();
     }
 
     render() {
-        const elementStructure = {
-            tag: "div", attrs: {class: 'todo-list'}, children: [
-                {tag: 'h1', attrs: {}, children: 'TODO List'},
-                {
-                    tag: 'div', attrs: {class: "add-todo"}, children: [
-                        {
-                            tag: 'input',
-                            attrs: {id: 'new-todo', type: 'text', placeholder: 'Задание', value: this.currentInputValue},
-                            onChange: this.onAddInputChange.bind(this)
-                        },
-                        {tag: "button", attrs: {id: "add-btn"}, children: "+", onClick: this.onAddTask.bind(this)}
-                    ]
-                },
-                {
-                    tag: 'ul', attrs: {id: 'todos'}, children: this.state.map(
-                        label => ({
-                            tag: 'li', attrs: {}, children: [
-                                {tag: 'input', attrs: {type: 'checkbox', ...(this.completeTasks.includes(label)?{checked: true}:{})}, onClick: ()=>this.completeTask(label)},
-                                {tag: 'label', attrs: {class:this.completeTasks.includes(label)? 'complete':''}, children: label},
-                                {
-                                    tag: 'button', attrs: {}, children: '🗑️', onClick:
-                                        () => {
-                                            this.state = this.state.filter(x => x !== label);
-                                            this.update();
-                                        }
-                                },
-                            ]
-                        })
-                    )
-                }
+        const addTaskCmp = new AddTask(this.addTask);
+        const taskNodes = this.tasks.map(label => {
+            const taskCmp = new Task(
+                label,
+                this.completed.has(label),
+                () => this.toggleTask(label),
+                () => this.deleteTask(label)
+            );
+            return taskCmp.getDomNode();
+        });
+        
+        return createElement(
+            'div', {class:'todo-list'}, [
+                createElement('h1', {}, 'TODO List'),
+                addTaskCmp.getDomNode(),
+                createElement('ul', {id:'todos'}, taskNodes)
             ]
-        };
-        console.log(elementStructure)
-        return this.renderRecursion(elementStructure);
-    }
-    completeTask(taskName){
-        if (this.completeTasks.includes(taskName)){
-            this.completeTasks = this.completeTasks.filter(x=>x!==taskName);
-        }
-        else{
-            this.completeTasks.push(taskName);
-        }
-
-        this.update();
-    }
-    onAddTask() {
-        if (this.currentInputValue.trim()) {
-            this.state.push(this.currentInputValue);
-            this.currentInputValue = "";
-            this.update();
-        }
-    }
-
-    onAddInputChange(e) {
-        this.currentInputValue = e.target.value;
+        );
     }
 }
 
