@@ -50,6 +50,7 @@ class TodoList extends Component {
     constructor() {
         super();
         this.state = ["Сделать домашку", "Сделать практику", "Пойти домой"];
+        this.completeTasks = [];
         this.currentInputValue = "";
     }
 
@@ -79,8 +80,8 @@ class TodoList extends Component {
                     tag: 'ul', attrs: {id: 'todos'}, children: this.state.map(
                         label => ({
                             tag: 'li', attrs: {}, children: [
-                                {tag: 'input', attrs: {type: 'checkbox'}},
-                                {tag: 'label', attrs: {}, children: label},
+                                {tag: 'input', attrs: {type: 'checkbox', ...(this.completeTasks.includes(label)?{checked: true}:{})}, onClick: ()=>this.completeTask(label)},
+                                {tag: 'label', attrs: {class:this.completeTasks.includes(label)? 'complete':''}, children: label},
                                 {
                                     tag: 'button', attrs: {}, children: '🗑️', onClick:
                                         () => {
@@ -94,9 +95,19 @@ class TodoList extends Component {
                 }
             ]
         };
+        console.log(elementStructure)
         return this.renderRecursion(elementStructure);
     }
+    completeTask(taskName){
+        if (this.completeTasks.includes(taskName)){
+            this.completeTasks = this.completeTasks.filter(x=>x!==taskName);
+        }
+        else{
+            this.completeTasks.push(taskName);
+        }
 
+        this.update();
+    }
     onAddTask() {
         if (this.currentInputValue.trim()) {
             this.state.push(this.currentInputValue);
